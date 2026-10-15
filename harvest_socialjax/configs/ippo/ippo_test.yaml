@@ -1,0 +1,62 @@
+# Test-scale IPPO (ENV_SCALE=test → 12×24, scaled obs/beam).
+# Standard test orchard: N=4, plus_patch, 98 apples (24.5/agent).
+# PPO batch: supervisor standard (192 envs × 500 steps, 50 minibatches).
+# Geometry base: env_scale_presets.TEST_* ; agent count from ENV_NUM_AGENTS.
+
+"ENV_SCALE": "test"
+"ENV_NUM_AGENTS": 4
+"ENV_NAME": "harvest_common_open"
+"ENV_KWARGS":
+  num_inner_steps: 1000
+  cnn: true
+  jit: true
+  shared_rewards: false
+  regrowth_scale: 1.0
+  # 98 apples @ N=4: round(density × 18 × 4) with density = 98/72
+  apple_density: 1.361111111111111
+  apple_layout_mode: plus_patch
+
+"SEED": 0
+"NUM_SEEDS": 1
+"TOTAL_TIMESTEPS": 50_000_000  # ~520 PPO updates × 96k rollout batch
+# LR anneal horizon (env steps). 100M → end LR = ½ initial at 50M steps.
+"ANNEAL_LR_TOTAL_TIMESTEPS": 100_000_000
+"NUM_ENVS": 192  # supervisor standard; batch=96000
+"NUM_STEPS": 500
+"LR": 5.0e-4
+"ANNEAL_LR": true
+"UPDATE_EPOCHS": 2
+"NUM_MINIBATCHES": 50  # batch=96000 → mb=1920
+"GAMMA": 0.99
+"GAE_LAMBDA": 0.95
+"CLIP_EPS": 0.2
+"ENT_COEF": 0.01
+"VF_COEF": 0.5
+"MAX_GRAD_NORM": 0.5
+"ACTIVATION": "relu"
+"LOG_EVERY": 1
+"UPDATES_PER_JIT": 5
+"DEBUG_PERF": false
+"VERBOSE_LOGGING": false
+"LOG_PER_AGENT": false
+"USE_WANDB": true
+"WANDB_MODE": "online"
+"WANDB_MEAN_STD_PLOTS": true
+"WANDB_MEAN_STD_WINDOW": 10
+"PROJECT": "harvest_ippo"
+"CHECKPOINT_DIR": "checkpoints"
+"CHECKPOINT_EVERY": 50
+"RENDER_GIF": false  # render later via scripts/render_ippo_from_checkpoint.py
+"RENDER_GIF_COUNT": 5  # start + end + 3 evenly spaced (if RENDER_GIF=true)
+"RENDER_GIF_START_STEPS": 250
+"RENDER_GIF_TAIL_STEPS": 100
+"RENDER_GIF_TAIL": true
+
+"ENABLE_REPUTATION": false
+"REPUTATION":
+  r_star: 0.2
+  ema_beta: 0.99
+  decay: 0.995
+  alpha_h: 0.05
+  alpha_z: 0.15
+  embedding_dim: 8

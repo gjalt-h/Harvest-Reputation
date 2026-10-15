@@ -1,0 +1,53 @@
+# Test-scale IPPO with shared-reward optimization (team PPO/GAE objective).
+# Env still returns individual rewards (shared_rewards=false) for comparable metrics.
+# OPTIMIZE_SHARED_REWARDS=true broadcasts team-sum learning signal per agent.
+# PPO batch + logging aligned with ippo_test.yaml (supervisor standard).
+
+"ENV_SCALE": "test"
+"ENV_NUM_AGENTS": 4
+"ENV_NAME": "harvest_common_open"
+"ENV_KWARGS":
+  num_inner_steps: 1000
+  cnn: true
+  jit: true
+  shared_rewards: false
+  regrowth_scale: 1.0
+  apple_density: 1.0
+  apple_layout_mode: plus_patch
+
+"OPTIMIZE_SHARED_REWARDS": true
+
+"SEED": 0
+"NUM_SEEDS": 1
+"TOTAL_TIMESTEPS": 50_000_000
+"ANNEAL_LR_TOTAL_TIMESTEPS": 100_000_000  # end LR = ½ initial (aligned with ippo_test)
+"NUM_ENVS": 192
+"NUM_STEPS": 500
+"LR": 5.0e-4
+"ANNEAL_LR": true
+"UPDATE_EPOCHS": 2
+"NUM_MINIBATCHES": 50
+"GAMMA": 0.99
+"GAE_LAMBDA": 0.95
+"CLIP_EPS": 0.2
+"ENT_COEF": 0.01
+"VF_COEF": 0.5
+"MAX_GRAD_NORM": 0.5
+"ACTIVATION": "relu"
+"LOG_EVERY": 1
+"UPDATES_PER_JIT": 5
+"DEBUG_PERF": false
+"VERBOSE_LOGGING": false
+"LOG_PER_AGENT": false
+"USE_WANDB": true
+"WANDB_MODE": "online"
+"WANDB_MEAN_STD_PLOTS": true
+"WANDB_MEAN_STD_WINDOW": 10
+"PROJECT": "harvest_ippo"
+"CHECKPOINT_DIR": "checkpoints"
+"CHECKPOINT_EVERY": 50
+"RENDER_GIF": true
+"RENDER_GIF_COUNT": 5
+"RENDER_GIF_START_STEPS": 250
+"RENDER_GIF_TAIL_STEPS": 100
+"RENDER_GIF_TAIL": true

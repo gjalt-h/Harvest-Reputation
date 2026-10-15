@@ -1,0 +1,62 @@
+# Run B — stronger enforcement signal.
+# Diff vs ippo_test_reputation_50m: alpha_h=0.006, alpha_z=0, enforcement_strictness=0.3
+# tag_timeout stays 25.
+
+"ENV_SCALE": "test"
+"ENV_NUM_AGENTS": 4
+"ENV_NAME": "harvest_common_open"
+"ENV_KWARGS":
+  num_inner_steps: 1000
+  cnn: true
+  jit: true
+  shared_rewards: false
+  regrowth_scale: 1.0
+  # Standard test orchard: 98 apples = 24.5/agent @ N=4 (same as ippo_test).
+  apple_density: 1.361111111111111
+  apple_layout_mode: plus_patch
+  tag_timeout: 25
+
+"SEED": 0
+"NUM_SEEDS": 1
+"TOTAL_TIMESTEPS": 50_000_000
+"ANNEAL_LR_TOTAL_TIMESTEPS": 100_000_000
+"NUM_ENVS": 192
+"NUM_STEPS": 500
+"LR": 5.0e-4
+"ANNEAL_LR": true
+"UPDATE_EPOCHS": 2
+"NUM_MINIBATCHES": 50
+"GAMMA": 0.99
+"GAE_LAMBDA": 0.95
+"CLIP_EPS": 0.2
+"ENT_COEF": 0.01
+"VF_COEF": 0.5
+"MAX_GRAD_NORM": 0.5
+"ACTIVATION": "relu"
+"LOG_EVERY": 1
+"UPDATES_PER_JIT": 5
+"DEBUG_PERF": false
+"VERBOSE_LOGGING": false
+"LOG_PER_AGENT": false
+"USE_WANDB": true
+"WANDB_MODE": "offline"
+"WANDB_RUN_GROUP": "ippo_rep_strictness_ah006_az0_50M"
+"WANDB_MEAN_STD_PLOTS": false
+"PROJECT": "harvest_ippo_rep"
+"CHECKPOINT_DIR": "checkpoints"
+"CHECKPOINT_EVERY": 50
+"RENDER_GIF": false
+"RENDER_EPISODE_DIAG": false
+
+"ENABLE_REPUTATION": true
+"REPUTATION":
+  r_star: 0.2
+  ema_beta: 0.99
+  decay: 0.995
+  alpha_h: 0.006
+  alpha_z: 0.0
+  burst_decay: 0.9
+  alpha_burst: 0.0
+  embedding_dim: 8
+  enable_enforcement: true
+  enforcement_strictness: 0.3

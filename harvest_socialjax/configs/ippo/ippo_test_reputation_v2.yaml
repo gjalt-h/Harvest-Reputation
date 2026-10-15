@@ -1,0 +1,156 @@
+# Test-scale IPPO with reputation_v2: burst-window timeout + binary Good/Bad
+# labels on ch15/ch16 (+1 Good, −1 Bad, 0 empty). Optional local-last timeout.
+# Mutual exclusion: ENABLE_REPUTATION and ENABLE_REPUTATION_V2 cannot both be true.
+
+"ENV_SCALE": "test"
+"ENV_NUM_AGENTS": 4
+"ENV_NAME": "harvest_common_open"
+"ENV_KWARGS":
+  num_inner_steps: 1000
+  cnn: true
+  jit: true
+  shared_rewards: false
+  regrowth_scale: 1.0
+  apple_density: 1.361111111111111
+  apple_layout_mode: plus_patch
+  # Env-side bandits (no policy slots). Defaults off (count=0); must be
+  # present so Hydra CLI can override (struct forbids adding new keys).
+  bandit_count: 0
+  bandit_respawn_delay: 0  # 0 = instant respawn after zap
+  # Global linear schedule for respawn delay (W&B episode_count units).
+  bandit_respawn_delay_anneal: false
+  bandit_respawn_delay_start: -1  # <0 → use bandit_respawn_delay
+  bandit_respawn_delay_end: 0
+  bandit_respawn_delay_anneal_episodes: 50000
+  bandit_count_anneal: false
+  bandit_anneal_mode: linear  # linear | step
+  bandit_count_start: -1  # <0 → use bandit_count
+  bandit_count_end: 0
+  bandit_count_anneal_episodes: 20000  # W&B episode_count units
+  # Step schedule (mode=step): comma-separated counts / phase lengths.
+  bandit_step_counts: ""
+  bandit_step_episodes: ""
+  bandit_schedule_env_multiplier: 1  # trainer overwrites with NUM_ENVS
+  # Ablation: zero ch15/ch16 in obs (injected from REPUTATION_V2 when set).
+  mask_reputation_obs: false
+
+"SEED": 0
+"NUM_SEEDS": 1
+"TOTAL_TIMESTEPS": 25_000_000
+"ANNEAL_LR_TOTAL_TIMESTEPS": 100_000_000
+"NUM_ENVS": 192
+"NUM_STEPS": 500
+"LR": 5.0e-4
+"ANNEAL_LR": true
+"UPDATE_EPOCHS": 4
+"NUM_MINIBATCHES": 25
+"GAMMA": 0.995
+"GAE_LAMBDA": 0.95
+"CLIP_EPS": 0.2
+"ENT_COEF": 0.01
+# Linear entropy anneal (off by default). ENT_COEF = start; ENT_COEF_END = hold.
+"ANNEAL_ENT": false
+"ENT_COEF_END": 0.01
+"ANNEAL_ENT_FRAC": 0.25  # used when ANNEAL_ENT_TOTAL_TIMESTEPS is null
+"ANNEAL_ENT_TOTAL_TIMESTEPS": null  # null → ANNEAL_ENT_FRAC * TOTAL_TIMESTEPS
+"VF_COEF": 0.5
+"MAX_GRAD_NORM": 0.5
+"ACTIVATION": "relu"
+"LOG_EVERY": 1
+"UPDATES_PER_JIT": 5
+"DEBUG_PERF": false
+"VERBOSE_LOGGING": false
+"LOG_PER_AGENT": false
+"USE_WANDB": true
+"WANDB_MODE": "offline"
+"WANDB_MEAN_STD_PLOTS": true
+"WANDB_MEAN_STD_WINDOW": 10
+"PROJECT": "harvest_ippo_rep"
+"CHECKPOINT_DIR": "checkpoints"
+"CHECKPOINT_EVERY": 50
+"RENDER_GIF": false
+"RENDER_GIF_COUNT": 5
+"RENDER_GIF_START_STEPS": 250
+"RENDER_GIF_TAIL_STEPS": 100
+"RENDER_GIF_TAIL": true
+
+"ENABLE_REPUTATION": false
+"ENABLE_REPUTATION_V2": true
+"ENABLE_POLICE_AGENT": false
+"WARMSTART_HARVESTERS_CHECKPOINT": null  # optional; prefer env export
+# Must be present for Hydra CLI overrides (struct). Shared/baseline shaping is
+# off by default; enable via sbatch (e.g. OPTIMIZE_SHARED_REWARDS=true).
+"OPTIMIZE_SHARED_REWARDS": false
+"OPTIMIZE_BASELINE": false
+"POLICE":
+  focus_on_bad: false
+  police_beam_length: null
+  police_beam_width: null
+  police_timeout_duration: null
+"REPUTATION_V2":
+  window_len: 10
+  max_harvests_in_window: 2  # floor(r_star=0.2 * 10); sustainable never punished
+  timeout_duration: 25  # freeze length when enforcement fires
+  enforce_mode: freeze
+  # Local-last (L2≤2 neighbor L=0) → Bad label.
+  last_apple_timeout: false
+  # Respawn after freeze → Good again.
+  reset_label_on_respawn: true
+  # Immediate freeze on burst/last-apple (legacy); prefer delayed/periodic below.
+  immediate_timeout: false
+  # Per-agent: freeze exactly N steps after becoming Bad (0 = off).
+  timeout_delay: 0
+  # Periodic: every enforcement_period steps, timeout Bad agents with bad_age >= delay.
+  enforcement_enabled: true
+  enforcement_delay: 0
+  enforcement_period: 0  # 0 = periodic off
+  # Episode schedules (W&B episode_count units via schedule_env_multiplier=NUM_ENVS).
+  delay_ramp_enabled: false
+  delay_ramp_every_episodes: 1000
+  delay_ramp_max_delay: 9
+  delay_ramp_start_immediate: true
+  delay_hold_episodes: 0
+  delay_hold_start_delay: 0
+  delay_ramp_end_episodes: 0
+  delay_curriculum_end_immediate: false
+  delay_curriculum_end_disable_enforcement: false
+  enforcement_stop_after_episodes: 0  # 0 = never stop
+  schedule_env_multiplier: 1  # trainer overwrites with NUM_ENVS
+  # Graded Good stack (−1 Bad; +1,+2,+3,…). False = binary ±1.
+  graded_reputation: false
+  graded_max_reputation: 0  # 0 = uncapped
+  # Peer punish (no police): +bad_reward per Bad in beam; good_penalty per Good (0=off).
+  peer_punish_reward_enabled: false
+  peer_punish_bad_reward: 1.0
+  peer_punish_good_penalty: 0.0  # set -bad_reward for matched Good-zap penalty
+  # Linear / piecewise anneal of peer magnitudes (W&B episode_count); hold at *_end.
+  peer_punish_anneal: false
+  peer_punish_anneal_episodes: 30000
+  peer_punish_intro_episodes: 0  # 0 until this ep, then peak (piecewise)
+  peer_punish_anneal_start_episodes: 0  # hold peak until this ep (piecewise)
+  peer_punish_anneal_end_episodes: 0  # 0 → use anneal_episodes as end
+  peer_punish_bad_reward_end: 0.0
+  peer_punish_good_penalty_end: 0.0
+  only_good_can_zap: false  # Bad agents' zap remapped to stay
+  # Peer zaps only freeze Bad (label<0); Good hit by peer beam stays active.
+  peer_focus_on_bad: false
+  # Ablation: zero ch15/ch16 in policy obs; labels still computed/stored.
+  mask_reputation_obs: false
+  # false = harvest-only v3 (zap hits do not change Good/Bad labels).
+  zap_affects_label: true
+  # Explicit toggle (only when zap_affects_label=true):
+  #   false = legacy: any Good in beam → zapper Bad
+  #   true  = pure-good-only: Bad iff ≥1 Good and 0 Bad in beam
+  # Override: REPUTATION_V2.zap_to_bad_only_pure_good=true|false
+  zap_to_bad_only_pure_good: false
+  # Probabilistic Bad enforcement (classic P=clip(-s*rep,0,1); binary Bad → P=s).
+  # Independent of delayed/periodic enforcement_enabled above.
+  prob_enforcement_enabled: false
+  prob_enforcement_strictness: 0.01  # constant s when decay off
+  prob_enforcement_decay_enabled: false
+  prob_enforcement_strictness_start: 0.5
+  prob_enforcement_strictness_end: 0.005
+  prob_enforcement_decay_episodes: 20000  # W&B episode_count units
+  # Phase 2 (optional): after phase 1, linear end → final (0 = hold at end).
+  prob_enforcement_decay2_episodes: 0
+  prob_enforcement_strictness_final: 0.0

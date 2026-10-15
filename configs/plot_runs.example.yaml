@@ -1,0 +1,64 @@
+# Copy to plot_runs.yaml (gitignored) and fill in your W&B run IDs.
+# Plot scripts default every seed0 to null and load finished runs from groups.
+# Only set seed0 when seed 0 lives outside the W&B group (common for first runs).
+
+# Stack A baselines (γ=0.995) — usually group-only, no seed0 needed
+baselines:
+  independent_group: ippo_v2_w2_m1_no_peer_indep_50kep
+  shared_group: ippo_v2_w2_m1_no_peer_shared_50kep
+
+# Stack B baselines (γ=0.99 ENT anneal)
+baselines_g99:
+  independent_group: ippo_v2_w2_m1_no_peer_indep_ep4_mb25_g99_ent005_floor0005_50kep
+  shared_group: ippo_v2_w2_m1_no_peer_shared_ep4_mb25_g99_ent005_floor0005_50kep
+
+peer:
+  group: ippo_v2_w2_m1_scratch_br5_g5_tdur25_ep4_mb25_g99_ent005_floor0005_50kep
+  seed0: null  # e.g. "xxxxxxxx"
+
+gimm:
+  group: ippo_v2_w2_m1_scratch_br5_gimm_tdur25_ep4_mb25_g99_ent005_floor0005_50kep
+  seed0: null
+
+peer_masked:
+  group: ippo_v2_w2_m1_scratch_br5_g5_mask_rep_tdur25_ep4_mb25_g99_ent_floor0005_mask_rep_50kep
+  seed0: null
+
+gimm_masked:
+  group: ippo_v2_w2_m1_scratch_br5_gimm_mask_rep_tdur25_ep4_mb25_g99_ent005_floor0005_50kep
+  seed0: null
+
+enf:
+  group: ippo_v2_w2_m1_enf_period_p1_50m
+  seed0: null
+  # Optional name substring if looking up by run name instead of id:
+  name_substr: null
+
+police:
+  group: ippo_v2_w2_m1_scratch_police1_no_peer_tdur25_50M
+  seed0: null
+  name_substr: null
+
+police_masked:
+  group: ippo_v2_w2_m1_scratch_police1_no_peer_mask_rep_tdur25_50M
+  seed0: null
+
+drop:
+  enf_police_group: ippo_v2_w2_m1_drop_enf_continue_50M
+  peer_group: ippo_v2_w2_m1_br5g5_ent005_g99_drop_rew_from_u200_50M
+  gimm_group: ippo_v2_w2_m1_gimm_drop_rew_keepimm_u200_50M
+  enf_seed0: null
+  police_seed0: null
+  peer_seed0: null
+  gimm_seed0: null
+
+# Older / one-off comparisons (plot_requested_comparisons.py)
+requested:
+  peer_g99_100k: null
+  peer_g995: null
+  gimm: null
+  enf_p1: null
+  gimm_masked: null
+  gimm_no_rew: null
+  police: null
+  police_masked: null

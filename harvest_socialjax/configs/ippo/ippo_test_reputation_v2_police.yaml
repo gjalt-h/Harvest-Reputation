@@ -1,0 +1,132 @@
+# IPPO + reputation v2 + 1 police agent (N=4 harvesters + police → 5 env agents).
+# Police: no apple harvest, timeout-immune, +1 Bad / −1 Good zap reward.
+# Mean R/P/S/E / system_peace stay harvester-only; police metrics under enforcement/*.
+
+"ENV_SCALE": "test"
+"ENV_NUM_AGENTS": 4
+"ENV_NAME": "harvest_common_open"
+"ENV_KWARGS":
+  num_inner_steps: 1000
+  cnn: true
+  jit: true
+  shared_rewards: false
+  regrowth_scale: 1.0
+  apple_density: 1.361111111111111
+  apple_layout_mode: plus_patch
+
+"SEED": 0
+"NUM_SEEDS": 1
+"TOTAL_TIMESTEPS": 25_000_000
+"ANNEAL_LR_TOTAL_TIMESTEPS": 100_000_000
+"NUM_ENVS": 192
+"NUM_STEPS": 500
+"LR": 5.0e-4
+"ANNEAL_LR": true
+"UPDATE_EPOCHS": 4
+"NUM_MINIBATCHES": 25
+"GAMMA": 0.995
+"GAE_LAMBDA": 0.95
+"CLIP_EPS": 0.2
+"ENT_COEF": 0.01
+# Linear entropy anneal (off by default). ENT_COEF = start; ENT_COEF_END = hold.
+"ANNEAL_ENT": false
+"ENT_COEF_END": 0.01
+"ANNEAL_ENT_FRAC": 0.25  # used when ANNEAL_ENT_TOTAL_TIMESTEPS is null
+"ANNEAL_ENT_TOTAL_TIMESTEPS": null  # null → ANNEAL_ENT_FRAC * TOTAL_TIMESTEPS
+"VF_COEF": 0.5
+"MAX_GRAD_NORM": 0.5
+"ACTIVATION": "relu"
+"LOG_EVERY": 1
+"UPDATES_PER_JIT": 5
+"DEBUG_PERF": false
+"VERBOSE_LOGGING": false
+"LOG_PER_AGENT": false
+"USE_WANDB": true
+"WANDB_MODE": "offline"
+"WANDB_MEAN_STD_PLOTS": true
+"WANDB_MEAN_STD_WINDOW": 10
+"PROJECT": "harvest_ippo_rep"
+"CHECKPOINT_DIR": "checkpoints"
+"CHECKPOINT_EVERY": 50
+"RENDER_GIF": false
+"RENDER_GIF_COUNT": 5
+"RENDER_GIF_START_STEPS": 250
+"RENDER_GIF_TAIL_STEPS": 100
+"RENDER_GIF_TAIL": true
+
+"ENABLE_REPUTATION": false
+"ENABLE_REPUTATION_V2": true
+"ENABLE_POLICE_AGENT": true
+"NUM_POLICE_AGENTS": 1  # append this many police after ENV_NUM_AGENTS harvesters
+# Optional warm-starts via env (preferred) or Hydra. Fresh opt/steps either way.
+# Can combine harvesters + police; mutually exclusive with RESUME_CHECKPOINT.
+"WARMSTART_POLICE_CHECKPOINT": null
+"WARMSTART_POLICE_SOURCE_AGENTS": null  # optional; default = police ids in source ckpt
+"WARMSTART_HARVESTERS_CHECKPOINT": null  # 4-agent delay ckpt → agents 0..N_HARVESTERS-1
+# When true, police keep warmstarted weights (no PPO updates). Requires
+# WARMSTART_POLICE_CHECKPOINT. Harvesters still learn.
+"FREEZE_POLICE": false
+"OPTIMIZE_SHARED_REWARDS": false
+"OPTIMIZE_BASELINE": false
+
+"REPUTATION_V2":
+  window_len: 10
+  max_harvests_in_window: 2
+  timeout_duration: 25
+  enforce_mode: freeze
+  last_apple_timeout: false
+  reset_label_on_respawn: true
+  immediate_timeout: false
+  timeout_delay: 0
+  enforcement_enabled: true
+  enforcement_delay: 0
+  enforcement_period: 0
+  delay_ramp_enabled: false
+  delay_ramp_every_episodes: 1000
+  delay_ramp_max_delay: 9
+  delay_ramp_start_immediate: true
+  delay_hold_episodes: 0
+  delay_hold_start_delay: 0
+  delay_ramp_end_episodes: 0
+  delay_curriculum_end_immediate: false
+  delay_curriculum_end_disable_enforcement: false
+  enforcement_stop_after_episodes: 0
+  schedule_env_multiplier: 1
+  graded_reputation: false
+  graded_max_reputation: 0
+  peer_punish_reward_enabled: false
+  peer_punish_bad_reward: 1.0
+  peer_punish_good_penalty: 0.0
+  peer_punish_anneal: false
+  peer_punish_anneal_episodes: 30000
+  peer_punish_intro_episodes: 0
+  peer_punish_anneal_start_episodes: 0
+  peer_punish_anneal_end_episodes: 0
+  peer_punish_bad_reward_end: 0.0
+  peer_punish_good_penalty_end: 0.0
+  only_good_can_zap: false
+  # Peer zaps only freeze Bad (label<0); Good hit by peer beam stays active.
+  peer_focus_on_bad: false
+  # Ablation: zero ch15/ch16 in policy obs; labels still computed/stored.
+  mask_reputation_obs: false
+  zap_affects_label: true
+  # Explicit toggle (only when zap_affects_label=true):
+  #   false = legacy: any Good in beam → zapper Bad
+  #   true  = pure-good-only: Bad iff ≥1 Good and 0 Bad in beam
+  zap_to_bad_only_pure_good: false
+  # Probabilistic Bad enforcement (must exist for Hydra CLI overrides).
+  prob_enforcement_enabled: false
+  prob_enforcement_strictness: 0.01
+  prob_enforcement_decay_enabled: false
+  prob_enforcement_strictness_start: 0.5
+  prob_enforcement_strictness_end: 0.005
+  prob_enforcement_decay_episodes: 20000
+  prob_enforcement_decay2_episodes: 0
+  prob_enforcement_strictness_final: 0.0
+
+# Beam / timeout default to harvester values when null.
+"POLICE":
+  focus_on_bad: false
+  police_beam_length: null
+  police_beam_width: null
+  police_timeout_duration: null

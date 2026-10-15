@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.npz
+
+# Environments / secrets
+.env
+.venv/
+venv/
+*.local.yaml
+configs/plot_runs.yaml
+harvest_socialjax/configs/plot_runs.yaml
+configs/plot_runs.yaml
+harvest_socialjax/configs/plot_runs.yaml
+
+# Training / logging artifacts
+outputs/
+runs/
+logs/
+wandb/
+wandb_runs/
+wandb_offline_*/
+wandb_synced/
+checkpoints/
+mlruns/
+lightning_logs/
+tb_logs/
+*.ckpt
+*.pkl
+
+# Generated media dumps (curated showcase under GIFs/ is tracked)
+/exports/
+**/plots/
+*.mp4
+# Ignore ad-hoc GIF outputs everywhere except the curated GIFs/ folder
+*.gif
+!GIFs/
+!GIFs/**/*.gif
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.cursor/
+.cursorrules
+
+# Local temp
+tmp/
+tmp_*/
+_tmp_*

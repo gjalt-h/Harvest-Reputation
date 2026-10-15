@@ -1,0 +1,24 @@
+__pycache__/
+Fixed_gifs/
+outputs/
+wandb/
+checkpoints/
+*.pickle
+
+# IQL evaluation outputs
+evaluation/iql/outputs/
+evaluation/iql/wandb/
+
+# Generated evaluation GIFs (README assets in docs/images/ stay tracked)
+evaluation/**/*.gif
+
+# Claude Code generated files
+.claude/
+CLAUDE.md
+ENGINEERING_CONTRIBUTIONS.md
+test_env.py
+test_lbf_env.py
+test_lbf_simple.py
+
+# Editor / IDE configs
+.vscode/

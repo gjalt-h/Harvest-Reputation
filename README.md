@@ -1,130 +1,126 @@
-# Harvest Reputation experiments
+# Commons Harvest + reputation (thesis code)
 
-This GitHub README contains additional materials regarding the reputation system experiments conducted in the Harvest Open environment.
-For reading please view "Master Thesis: ...". The code used to run the experiments can be found in "Code". 
-Below you can find visualizations of multiple key dynamics observations through GIFs. These GIFs are no results on their own, but are meant to give a clearer idea of the concepts and patterns described in the Thesis. Several key findings have been uncovered during the research by looking closely at these GIFs. This is a selection of experimental GIFs that have provided notable insights with a short description.
-Hopefully this page will enhance your understanding of the research whilst further sparking your interest into the fascinating multi agent behaviors.
+IPPO on **Commons Harvest: Open** with optional reputation / enforcement.
+Depends on a **trimmed** vendored copy of [SocialJax](https://github.com/cooperativex/SocialJax)
+under `foundation_code/SocialJax-main/` (Apache-2.0; see that folder’s `LICENSE` and `README.md`).
 
-## Tier 1. Baselines
+This release ships **code, configs, and launch scripts** to reproduce thesis
+experiments. It does **not** include datasets, checkpoints, or W&B logs.
 
-### Independent Baseline
+## Structure
 
-Firstly, to properly understand how individually optimizing agents behave throughout the learning trajectory we have the following GIFs illustrating 3 key stages in the learning curve _naivety, tragedy_ and _maturity_.
-These GIFs are sampled from the independent baseline seed 0 run at the following points in the reward curve to visualize the key stages of the tragedy.
+```
+README.md
+requirements.txt
+configs/plot_runs.example.yaml     # copy → plot_runs.yaml for local W&B run IDs
+GIFs/                              # curated experiment visualizations
+  README.md                        # tiered GIF descriptions (expand to view each GIF)
+foundation_code/SocialJax-main/    # trimmed SocialJax
+harvest_socialjax/
+  algorithms/ippo/                 # train / render / metrics
+  configs/ippo/                    # Hydra YAMLs (flat; Hydra path unchanged)
+  envs/                            # Harvest Open, reputation v1/v2, police, paper layouts
+  wrappers/
+  scripts/
+    main/                          # thesis-canonical launchers + plot scripts
+    extra/                         # env micro-sweeps + reputation v1 (not main results)
+    sbatch/                        # shared SLURM / W&B helpers
+  results/thesis_tables/           # aggregated CSV summaries for number checks
+```
 
-![Independent baseline - reward and peace landmarks](gifs/baseline/indep_s0_50m_reward_peace_gif_landmarks.png)
+Paper-scale **Lupu / Perolat** ASCII layouts live in `envs/env_scale_presets.py`.
 
-<details>
-<summary><b>GIF peak 1</b></summary>
+## Setup
 
-![Individual Baseline - peak 1](gifs/baseline/ind_peak_1.gif)
+```bash
+# Python 3.10; GPU: prefer SocialJax conda env or:
+pip install -r requirements.txt
+# For CUDA, install jax[cuda12]==0.6.2 as in foundation_code/SocialJax-main/requirements.txt
 
-Harvesting behavior during the first 250 frames of a 1000 frame episode at the first peak. 2 agents have learned to harvest quite well, 2 have not yet. The apples in the orchard remain plentiful. Zapping is not used.
-</details>
+export JAX_PLATFORMS=cpu   # login node / smoke; unset on GPU nodes
+```
 
-<details>
-<summary><b>GIF tragedy</b></summary>
+SocialJax is discovered via `harvest_socialjax/socialjax_path.py`.
 
-![Individual Baseline - tragedy](gifs/baseline/ind_bottom.gif)
+### W&B (optional)
 
-Harvesting behavior during the first 250 frames of a 1000 frame episode at the lowest point of the tragedy. All agents have learned to harvest effectively. The apples in the orchard are fully depleted by the end of the 250 frames (after the first 1/4 of the full episode) and will not grow back from this point. The zapping action is not applied effectively.
-</details>
+```bash
+export WANDB_ENTITY=YOUR_ENTITY
+export WANDB_PROJECT=harvest_ippo_rep   # or harvest_ippo for no-reputation
+export WANDB_API_KEY=...               # if online / sync
+```
 
-<details>
-<summary><b>GIF recovery</b></summary>
+Project **names** are generic; never commit entity names or API keys.
+Plot seed0 IDs: copy `configs/plot_runs.example.yaml` → `configs/plot_runs.yaml`.
 
-![Individual Baseline - peak 2](gifs/baseline/ind_peak_2.gif)
+## Data
 
-Harvesting behavior during the first 250 frames of a 1000 frame episode at the second peak (after the tragedy). All agents have learned to harvest and use their zapping beam often to time out their co-players. As a result, the apples in the orchard remain for longer.
-</details>
+No external dataset. The orchard is generated from `ENV_SCALE`, `ENV_NUM_AGENTS`,
+and `ENV_KWARGS`. **Thesis default: N=4**, test-scale, plus-patch ~98 apples.
+`ippo_test_shared.yaml` defaults to `ENV_NUM_AGENTS: 4`. Deviations are only in
+extra micro-sweep sbatches (documented there).
 
-<details>
-<summary><b>GIF end</b></summary>
+## Train
 
-![Individual Baseline - end](gifs/baseline/ind_end.gif)
+```bash
+python harvest_socialjax/algorithms/ippo/train_ippo_harvest.py --config-name <yaml> [overrides…]
+```
 
-Harvesting behavior during the first 250 frames of a 1000 frame episode at the end of training (after 50k episodes). All agents have learned to harvest and use their zapping beam often to time out their co-players. As a result, the apples in the orchard remain for longer. Behavior is similar to the second peak. Agents seem to focus more on harvesting in between zapping.
-</details>
+From **repo root** on a cluster:
 
-### Shared Baseline
+```bash
+export WANDB_ENTITY=YOUR_ENTITY
+mkdir -p logs
+sbatch --export=ALL harvest_socialjax/scripts/main/<script>.sh
+```
 
-The following GIF illustrates the behavior learned through optimizing a shared reward function.
-This GIF is sampled from the shared baseline seed 0 run at the final checkpoint.
+### Learning stacks
 
-<details>
-<summary><b>GIF</b></summary>
+| Stack | γ | Entropy | Used for |
+|-------|---|--------|----------|
+| **A** | 0.995 | 0.01 flat | Police, enf period=1, matching no-peer baselines |
+| **B (g99)** | 0.99 | 0.05→0.005 | Peer ±5, good-immunity, zap ablations, matching no-peer baselines |
 
-![Shared Baseline - end](gifs/baseline/sh_end.gif)
+Both no-peer baseline launchers are kept. Peer / gimm / zap are **g99 only**.
 
-Harvesting behavior during the first 250 frames of a 1000 frame episode at the end of training (after 50k episodes). The agents have learned a split effort approach. 2 agents perform the bulk of apple collection, while 2 sit (partially) at the sideline. This way the average reward is high and the agents avoid overharvesting without the need to zap each other. The apples in the orchard remain plentiful. No zapping occurs.
-</details>
+### Main experiments (`scripts/main/`)
 
-## Tier 2. Enforcement
-The following GIFs focus on the implementation of the reputation systems. Good agents are green, Bad agents are red. Police agents are Blue with light blue zap beams (different than the yellow zap beams of regular harvesters).
+| Experiment | Example launcher | Config |
+|------------|------------------|--------|
+| Indep ToC | `run_ippo_test.sbatch` | `ippo_test` |
+| Shared ToC (N=4) | `run_ippo_shared_n4.sbatch` | `ippo_test_shared` |
+| V2 no-peer A | `sbatch_v2_no_peer_indep_shared_50kep.sh` | `ippo_test_reputation_v2` + overrides |
+| V2 no-peer B | `sbatch_v2_no_peer_indep_shared_g99_ent005_floor0005_50kep.sh` | same |
+| Police1 | `sbatch_v2_scratch_police1_no_peer_*.sh` | `ippo_test_reputation_v2_police` |
+| Enf p1 | `sbatch_v2_scratch_enf_period_p1_seeds1to7_50m.sh` | `ippo_test_reputation_v2` |
+| Peer ±5 g99 | `sbatch_v2_scratch_peer_br5_g5_g99_*.sh` | `ippo_test_reputation_v2` |
+| Good immunity g99 | `sbatch_v2_scratch_peer_br5_gimm_g99_*.sh` | same |
+| Zap ablations g99 | `sbatch_v2_scratch_zap_ablations_g99_*.sh` | same |
+| Drop @ u200 | `sbatch_v2_*u200*.sh` / drop_* | resume from parent |
+| Mask-rep | `*_mask_rep_*.sh` | same as parent |
 
-### Strict enforcement
-<details>
-<summary><b>GIF</b></summary>
+Exact seeds and Hydra overrides are **inside each sbatch**.
 
-![Direct enforcement - end](gifs/enforcement/enf_period1_goodbad.gif)
+### Extra (`scripts/extra/`)
 
-Harvesting behavior during the first 500 frames of a 1000 frame episode at the end of training (after 50k episodes) enforced strictly through a direct timeout for Bad agents. The agents follow the reputation system near perfectly. The enforcement system has to kick in only seldomly. This means agents do not zap each other and harvest efficiently at a rate that does not deplete the orchard. 
-</details>
+Env micro-sweeps (N / density / regrowth / tag / beam) and **reputation v1**
+launchers / configs — supporting setups, not main thesis cells.
 
-### Police enforcement
-<details>
-<summary><b>GIF</b></summary>
+### Curated GIFs
 
-![Police enforcement - end](gifs/enforcement/police1_goodbad.gif)
+Key dynamics from the experiments are collected in [`GIFs/`](GIFs/).
+That folder has its own README with short descriptions and collapsible GIF
+embeds: see [`GIFs/README.md`](GIFs/README.md).
 
-Harvesting behavior during the first 500 frames of a 1000 frame episode at the end of training (after 50k episodes) enforced through a learning police agent. The agents follow the reputation system quite well. As an agent becomes Bad, the police agent tracks it down and zaps it effectively. The orchard is not close to depletion, but a local patch might get barren.
+To render additional GIFs from checkpoints:
 
-Notes on police behavior. The police agent has learned to keep to the lowest part of the Grid, over viewing a large part of the field. It has effectively learned to distinguish between Good and Bad agents. It only sporadically hits a Good agent, seemingly as accidental collateral damage when targeting a Bad agent.
+```bash
+python harvest_socialjax/scripts/main/render_ippo_from_checkpoint.py --help
+sbatch harvest_socialjax/scripts/main/run_ippo_render_from_checkpoint.sbatch
+```
 
-Note on harvesting behavior. The majority of agents seem to harvest according to the norms, even an agent that becomes Bad does not splurge but mainly continues a r
-</details>
+### Plots
 
-## Tier 3. Self-supported
-The last tier aims to let agents learn sustainable harvesting through the reputation system without external enforcers.
-
-### Peer reward
-<details>
-<summary><b>GIF</b></summary>
-
-![Peer reward - end](gifs/self-supported/peer_br5_g5_goodbad.gif)
-
-Harvesting behavior during the first 500 frames of a 1000 frame episode at the end of training (after 50k episodes) with a peer reward system. Zapping Bad agents is rewarded with 5, zapping Good punished with -5 direct signal. Good agents do not seem able to effectively target Bad agents. They get zapped themselves, or become Bad rather quickly.
-
-</details>
-
-### Peer reward + Good immunity
-<details>
-<summary><b>GIF</b></summary>
-
-![Peer reward + immunity - end](gifs/self-supported/peer_br5_gimm_goodbad.gif)
-
-Harvesting behavior during the first 500 frames of a 1000 frame episode at the end of training (after 50k episodes) with a peer reward + immunity system. Zapping Bad agents is rewarded with 5, Good agents cannot get zapped. Good agents seem to survive longer and target Bad agents. Zapping does seem fairly random, not very efficient. Harvesting behavior does significantly improve.
-
-</details>
-
-## Tier 4. Tweaked learning parameters
-After observing the previous Tier's peer reward GIFs, we tweaked the learning parameters for improved targeting.
-
-### Peer reward
-<details>
-<summary><b>GIF at 50k episodes</b></summary>
-
-![Peer reward - end](gifs/self-supported/floor0005_u520_goodbad.gif)
-
-Harvesting behavior during the first 500 frames of a 1000 frame episode after 50k episodes with a peer reward system. Zapping Bad agents is rewarded with 5, zapping Good punished with -5 direct signal. Good agents are quite able to effectively target Bad agents. They do get zapped themselves, or become Bad by zapping a Good agent by accident.
-
-</details>
-
-<details>
-<summary><b>GIF at 100k episodes</b></summary>
-
-![Peer reward - end](gifs/self-supported/peer_br5_g5_floor0005_u1040_goodbad.gif)
-
-Harvesting behavior during the first 500 frames of a 1000 frame episode after 100k episodes with a peer reward system. Zapping Bad agents is rewarded with 5, zapping Good punished with -5 direct signal. Good agents are able to effectively target Bad agents. They do get zapped themselves, or become Bad by zapping a Good agent by accident, resulting in occasional free space for Bad exploit.
-
-</details>
+Thesis comparison scripts: `harvest_socialjax/scripts/main/plot_*.py`.
+Set `WANDB_ENTITY` / `WANDB_PROJECT` and optional `configs/plot_runs.yaml`.
+Aggregated verification tables: `harvest_socialjax/results/thesis_tables/`.

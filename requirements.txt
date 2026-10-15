@@ -1,0 +1,26 @@
+# Pinned stack aligned with foundation_code/SocialJax-main (Python 3.10).
+# For GPU training use the same JAX CUDA build as in
+# foundation_code/SocialJax-main/requirements.txt (jax[cuda12]==0.6.2).
+# CPU-only: install jax/jaxlib CPU wheels of the same version instead.
+
+numpy==1.26.4
+scipy==1.12.0
+matplotlib==3.10.0
+pandas==2.2.3
+pillow==11.1.0
+PyYAML==6.0.2
+omegaconf==2.3.0
+hydra-core==1.3.2
+jax==0.6.2
+jaxlib==0.6.2
+flax==0.10.7
+optax==0.1.7
+chex==0.1.84
+distrax==0.1.5
+gymnax==0.0.8
+safetensors==0.5.2
+wandb==0.27.2
+orbax-checkpoint
+tensorflow-probability==0.25.0
+seaborn==0.13.2
+tqdm
